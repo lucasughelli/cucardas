@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  VIEWER
+
+  @@map("user_role")
+}
+
+enum StoreStatus {
+  ACTIVE
+  SUSPENDED
+
+  @@map("store_status")
+}
+
+enum ErrorSource {
+  FRONTEND
+  BACKEND
+  API
+
+  @@map("error_source")
+}
+
+enum ErrorLevel {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+
+  @@map("error_level")
+}
+
+enum CucardaType {
+  IMAGE
+  TEXT
+
+  @@map("cucarda_type")
+}
+
+enum CucardaLocation {
+  PRODUCT_PAGE
+  PRODUCT_GRID
+  BOTH
+
+  @@map("cucarda_location")
+}
+
+enum CucardaPosition {
+  TOP_LEFT
+  TOP_RIGHT
+  BOTTOM_LEFT
+  BOTTOM_RIGHT
+  CENTER
+
+  @@map("cucarda_position")
+}
+
+enum CucardaAnimation {
+  NONE
+  PULSE
+  BLINK
+  BOUNCE
+  SHAKE
+
+  @@map("cucarda_animation")
+}
+
+enum CucardaSize {
+  SMALL
+  MEDIUM
+  LARGE
+
+  @@map("cucarda_size")
+}
+
+/// Condición opcional para mostrar la cucarda solo si el producto la cumple.
+/// El widget la evalúa en el storefront (best-effort según los datos que exponga el tema).
+enum CucardaCondition {
+  NONE
+  ON_SALE
+  OUT_OF_STOCK
+  IN_STOCK
+  NEW
+
+  @@map("cucarda_condition")
+}
+
+/// Staff interno que usa el panel /admin. El rol "cliente" del spec original
+/// no vive acá: es un claim del JWT emitido a una tienda conectada (ver Store).
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(VIEWER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+/// Tienda de Tiendanube que instaló la app.
+model Store {
+  id             String      @id @default(uuid())
+  tnStoreId      String      @unique @map("tn_store_id")
+  name           String?
+  email          String?
+  accessTokenEnc String      @map("access_token_enc")
+  scope          String?
+  status         StoreStatus @default(ACTIVE)
+  scriptTagId    String?     @map("script_tag_id")
+  installedAt    DateTime    @default(now()) @map("installed_at")
+  lastSyncAt     DateTime?   @map("last_sync_at")
+  uninstalledAt  DateTime?   @map("uninstalled_at")
+
+  designs     Design[]
+  assignments Assignment[]
+  errorLogs   ErrorLog[]
+  auditLogs   AuditLog[]
+
+  @@map("stores")
+}
+
+/// Una cucarda. Puede ser de tipo TEXT (texto + colores renderizado por CSS en el storefront)
+/// o IMAGE (imagen subida o diseñada en el editor de lienzo). La tabla se llama "designs" por
+/// compatibilidad histórica, pero conceptualmente es la "Cucarda" que ve el comerciante.
+model Design {
+  id           String   @id @default(uuid())
+  storeId      String   @map("store_id")
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name         String
+  category     String?
+
+  type   CucardaType @default(IMAGE)
+  active Boolean     @default(true)
+
+  // Config de tipo TEXT
+  text            String?
+  textColor       String? @default("#ffffff") @map("text_color")
+  backgroundColor String? @default("#e0353b") @map("background_color")
+
+  // Config de tipo IMAGE (diseñada en el editor de lienzo Fabric.js o subida)
+  canvasJson   Json?   @map("canvas_json")
+  thumbnailUrl String? @map("thumbnail_url")
+
+  // Config de visualización en el storefront (común a ambos tipos)
+  location         CucardaLocation  @default(PRODUCT_PAGE)
+  position         CucardaPosition  @default(TOP_LEFT)
+  animation        CucardaAnimation @default(NONE)
+  size             CucardaSize      @default(SMALL)
+  /// Tamaño exacto en px. Si está presente, tiene prioridad sobre "size" en el render.
+  sizePx           Int?             @map("size_px")
+  condition        CucardaCondition @default(NONE)
+  hideNativeBadges Boolean          @default(false) @map("hide_native_badges")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  versions    DesignVersion[]
+  assignments Assignment[]
+
+  @@index([storeId])
+  @@map("designs")
+}
+
+/// Snapshot histórico del lienzo de una cucarda de imagen en cada guardado.
+model DesignVersion {
+  id         String   @id @default(uuid())
+  designId   String   @map("design_id")
+  design     Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+  canvasJson Json     @map("canvas_json")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([designId])
+  @@map("design_versions")
+}
+
+/// Asignación de un diseño a un producto de Tiendanube (no modifica el producto real).
+model Assignment {
+  id        String   @id @default(uuid())
+  storeId   String   @map("store_id")
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  designId  String   @map("design_id")
+  design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+  productId String   @map("product_id")
+  config    Json?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([storeId, productId])
+  @@index([designId])
+  @@map("assignments")
+}
+
+/// Errores centralizados (frontend, backend, llamadas a la API de Tiendanube).
+model ErrorLog {
+  id        String      @id @default(uuid())
+  storeId   String?     @map("store_id")
+  store     Store?      @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  level     ErrorLevel  @default(ERROR)
+  source    ErrorSource
+  message   String
+  stack     String?
+  context   Json?
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([storeId, createdAt])
+  @@index([level])
+  @@map("error_logs")
+}
+
+/// Historial de cambios relevantes por tienda (para el feed de "cambios recientes").
+model AuditLog {
+  id         String   @id @default(uuid())
+  storeId    String   @map("store_id")
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([storeId, createdAt])
+  @@map("audit_log")
+}

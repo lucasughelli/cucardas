@@ -1,0 +1,26 @@
+{
+  "name": "tiendanube-cucardas",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm:dev -w apps/backend\" \"npm:dev -w apps/frontend\"",
+    "dev:backend": "npm run dev -w apps/backend",
+    "dev:frontend": "npm run dev -w apps/frontend",
+    "build": "npm run build -w apps/backend && npm run build -w apps/frontend",
+    "test": "npm run test -w apps/backend",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run prisma:migrate -w apps/backend",
+    "db:studio": "npm run prisma:studio -w apps/backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

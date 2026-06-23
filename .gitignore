@@ -1,0 +1,21 @@
+node_modules/
+dist/
+build/
+# Secretos y config local — NUNCA commitear. Los *.example sí (son plantillas).
+.env
+.env.*
+!.env.example
+!.env.production.example
+ngrok.yml
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+coverage/
+.vite/
+apps/backend/prisma/dev.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+minio-data/
+postgres-data/
