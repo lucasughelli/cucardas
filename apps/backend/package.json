@@ -11,7 +11,7 @@
     "postinstall": "prisma generate",
     "build": "prisma generate && tsc -p tsconfig.json && npm run copy-assets",
     "copy-assets": "node -e \"const fs=require('fs');fs.mkdirSync('dist/modules/widget',{recursive:true});fs.copyFileSync('src/modules/widget/cucardas-widget.client.js','dist/modules/widget/cucardas-widget.client.js')\"",
-    "start": "prisma migrate deploy && tsx src/index.ts",
+    "start": "prisma migrate deploy && node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json",
