@@ -10,7 +10,7 @@
     "dev": "tsx watch src/index.ts",
     "postinstall": "prisma generate",
     "build": "prisma generate && tsc -p tsconfig.json && npm run copy-assets",
-    "copy-assets": "node -e \"const fs=require('fs');fs.mkdirSync('dist/modules/widget',{recursive:true});fs.copyFileSync('src/modules/widget/cucardas-widget.client.js','dist/modules/widget/cucardas-widget.client.js')\"",
+    "copy-assets": "node -e \"const fs=require('fs');fs.mkdirSync('dist/src/modules/widget',{recursive:true});fs.copyFileSync('src/modules/widget/cucardas-widget.client.js','dist/src/modules/widget/cucardas-widget.client.js')\"",
     "start": "prisma migrate deploy && node dist/src/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
