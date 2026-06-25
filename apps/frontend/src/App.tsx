@@ -5,7 +5,9 @@ import { AdminLayout } from "./admin/AdminLayout";
 import { AdminLoginPage } from "./admin/pages/AdminLoginPage";
 import { AppLayout } from "./app/AppLayout";
 import { DashboardPage } from "./app/pages/DashboardPage";
+import { SettingsPage } from "./app/pages/SettingsPage";
 import { SubscriptionPage } from "./app/pages/SubscriptionPage";
+import { TeamLoginPage } from "./app/pages/TeamLoginPage";
 import { AuthGate } from "./shared/auth/AuthGate";
 
 // Code-splitting de las páginas más pesadas (editor con Fabric.js/jsPDF, admin con recharts)
@@ -33,6 +35,7 @@ function App() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/login" element={<TeamLoginPage />} />
           <Route
             path="/admin"
             element={
@@ -64,6 +67,7 @@ function App() {
             <Route path="designs" element={<Navigate to="/cucardas" replace />} />
             <Route path="products" element={<ProductsPage />} />
             <Route path="subscription" element={<SubscriptionPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
       </Suspense>

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { IconBox, IconCard, IconDashboard, IconTag } from "../shared/components/icons";
+import { IconBox, IconCard, IconDashboard, IconSettings, IconTag } from "../shared/components/icons";
 
 const sections = [
   {
@@ -12,7 +12,10 @@ const sections = [
   },
   {
     title: "Cuenta",
-    links: [{ to: "/subscription", label: "Plan y facturación", icon: IconCard }],
+    links: [
+      { to: "/subscription", label: "Plan y facturación", icon: IconCard },
+      { to: "/settings", label: "Configuración", icon: IconSettings },
+    ],
   },
 ];
 
@@ -20,6 +23,7 @@ function currentCrumb(pathname: string): string {
   if (pathname.startsWith("/cucardas")) return "Cucardas";
   if (pathname.startsWith("/products")) return "Productos";
   if (pathname.startsWith("/subscription")) return "Plan y facturación";
+  if (pathname.startsWith("/settings")) return "Configuración";
   if (pathname.startsWith("/editor")) return "Editor de imagen";
   return "Dashboard";
 }

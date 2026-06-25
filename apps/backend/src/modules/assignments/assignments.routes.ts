@@ -2,7 +2,13 @@ import { Router } from "express";
 import { z } from "zod";
 import { asyncHandler } from "../../lib/asyncHandler";
 import { requireStoreAuth } from "../../middleware/auth";
-import { createAssignments, deleteAssignment, listAssignments, setAssignmentActive } from "./assignments.service";
+import {
+  createAssignments,
+  deleteAssignment,
+  listAssignments,
+  removeAssignmentsForProducts,
+  setAssignmentActive,
+} from "./assignments.service";
 
 export const assignmentsRouter = Router();
 assignmentsRouter.use(requireStoreAuth);
@@ -27,6 +33,17 @@ assignmentsRouter.post(
     const input = createSchema.parse(req.body);
     const assignments = await createAssignments(req.store!.storeId, input);
     res.status(201).json({ assignments });
+  }),
+);
+
+assignmentsRouter.post(
+  "/bulk-remove",
+  asyncHandler(async (req, res) => {
+    const { productIds } = z
+      .object({ productIds: z.array(z.string().min(1)).min(1).max(200) })
+      .parse(req.body);
+    const count = await removeAssignmentsForProducts(req.store!.storeId, productIds);
+    res.json({ removed: count });
   }),
 );
 

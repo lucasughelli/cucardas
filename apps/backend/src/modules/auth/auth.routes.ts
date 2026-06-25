@@ -1,14 +1,28 @@
 import { Router } from "express";
+import { z } from "zod";
 import { env } from "../../config/env";
 import { asyncHandler } from "../../lib/asyncHandler";
 import { logger } from "../../lib/logger";
 import { signToken } from "../../lib/jwt";
 import { upsertStoreFromOAuth } from "../stores/stores.service";
+import { loginStoreUser } from "../team/team.service";
 import { ensureWebhooksRegistered } from "../webhooks/webhooks.service";
 import { ensureScriptTagRegistered } from "../widget/scriptTag.service";
 import { buildAuthorizeUrl, exchangeCodeForToken, extractStoreName, fetchStoreInfo } from "./tiendanube.service";
 
 export const authRouter = Router();
+
+/** Login de cuentas de equipo (email + contraseña), scoped a la tienda del usuario. */
+authRouter.post(
+  "/team/login",
+  asyncHandler(async (req, res) => {
+    const { email, password } = z
+      .object({ email: z.string().trim().email(), password: z.string().min(1) })
+      .parse(req.body);
+    const result = await loginStoreUser(email, password);
+    res.json(result);
+  }),
+);
 
 /** Punto de entrada propio: redirige a la pantalla de autorización de Tiendanube. */
 authRouter.get("/tiendanube/install", (_req, res) => {

@@ -5,6 +5,9 @@ export interface StoreTokenPayload {
   kind: "store";
   storeId: string;
   tnStoreId: string;
+  /// Presente solo cuando la sesión es de una cuenta de equipo (login email/password),
+  /// no del dueño que entró por OAuth de Tiendanube. Sirve para "cambiar mi contraseña".
+  teamUserId?: string;
 }
 
 export interface UserTokenPayload {

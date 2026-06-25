@@ -12,6 +12,7 @@ import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { designsRouter } from "./modules/designs/designs.routes";
 import { errorsRouter } from "./modules/errors/errors.routes";
 import { productsRouter } from "./modules/products/products.routes";
+import { teamRouter } from "./modules/team/team.routes";
 import { webhooksRouter } from "./modules/webhooks/webhooks.routes";
 import { publicApiRouter, widgetRouter } from "./modules/widget/widget.routes";
 
@@ -74,6 +75,7 @@ export function createApp() {
   app.use("/api/errors", appCors, errorsRouter);
   app.use("/api/admin", appCors, adminRouter);
   app.use("/api/dashboard", appCors, dashboardRouter);
+  app.use("/api/team", appCors, teamRouter);
 
   app.use("/widget", widgetRouter);
   app.use("/api/public", cors(), publicApiRouter);

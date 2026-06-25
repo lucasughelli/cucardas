@@ -39,3 +39,9 @@ export async function setAssignmentActive(id: string, active: boolean): Promise<
 export async function deleteAssignment(id: string): Promise<void> {
   await apiClient.delete(`/api/assignments/${id}`);
 }
+
+/** Quita todas las cucardas de los productos indicados (acción masiva). */
+export async function bulkRemoveAssignments(productIds: string[]): Promise<number> {
+  const { data } = await apiClient.post<{ removed: number }>("/api/assignments/bulk-remove", { productIds });
+  return data.removed;
+}

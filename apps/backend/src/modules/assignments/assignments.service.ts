@@ -129,6 +129,30 @@ export async function deleteAssignment(storeId: string, assignmentId: string) {
   });
 }
 
+/** Quita TODAS las cucardas de un conjunto de productos (acción masiva). Devuelve cuántas borró. */
+export async function removeAssignmentsForProducts(
+  storeId: string,
+  productIds: string[],
+): Promise<number> {
+  if (productIds.length === 0) return 0;
+
+  const result = await prisma.assignment.deleteMany({
+    where: { storeId, productId: { in: productIds } },
+  });
+
+  if (result.count > 0) {
+    await prisma.auditLog.create({
+      data: {
+        storeId,
+        action: "assignment.bulk_deleted",
+        entityType: "assignment",
+        metadata: { productIds, count: result.count },
+      },
+    });
+  }
+  return result.count;
+}
+
 /** Una cucarda es renderizable si es de texto con contenido, o de imagen con thumbnail. */
 function isRenderable(design: Design): boolean {
   if (design.type === "TEXT") return Boolean(design.text && design.text.trim());

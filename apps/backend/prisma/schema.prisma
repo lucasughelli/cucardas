@@ -124,8 +124,34 @@ model Store {
   assignments Assignment[]
   errorLogs   ErrorLog[]
   auditLogs   AuditLog[]
+  users       StoreUser[]
 
   @@map("stores")
+}
+
+/// Cuenta de equipo de un comercio: permite que otras personas (además del dueño que entró por
+/// OAuth de Tiendanube) accedan al panel con email + contraseña, scoped a esa tienda.
+model StoreUser {
+  id           String        @id @default(uuid())
+  storeId      String        @map("store_id")
+  store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  email        String
+  name         String?
+  passwordHash String        @map("password_hash")
+  role         StoreUserRole @default(EDITOR)
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@unique([storeId, email])
+  @@index([storeId])
+  @@map("store_users")
+}
+
+enum StoreUserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+
+  @@map("store_user_role")
 }
 
 /// Una cucarda. Puede ser de tipo TEXT (texto + colores renderizado por CSS en el storefront)
