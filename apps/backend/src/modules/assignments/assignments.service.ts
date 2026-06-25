@@ -159,6 +159,21 @@ function isRenderable(design: Design): boolean {
   return Boolean(design.thumbnailUrl);
 }
 
+/**
+ * Cucarda vigente para el storefront: activa y dentro de su ventana de programación
+ * (startsAt null = desde siempre, endsAt null = sin fin). Así una cucarda programada solo
+ * empieza/deja de mostrarse en su fecha, sin intervención manual.
+ */
+function activeDesignWhere(now: Date): Prisma.DesignWhereInput {
+  return {
+    active: true,
+    AND: [
+      { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+      { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
+    ],
+  };
+}
+
 /** Usado por el widget público del storefront — sin auth, así que se cachea agresivamente. */
 export async function getPublicAssignments(tnStoreId: string, productId: string): Promise<PublicAssignment[]> {
   const cacheKey = `${tnStoreId}:${productId}`;
@@ -170,7 +185,7 @@ export async function getPublicAssignments(tnStoreId: string, productId: string)
       productId,
       active: true,
       store: { tnStoreId, status: "ACTIVE" },
-      design: { active: true },
+      design: activeDesignWhere(new Date()),
     },
     include: { design: true },
   });
@@ -195,7 +210,7 @@ export async function getPublicAssignmentsBatch(
       productId: { in: productIds },
       active: true,
       store: { tnStoreId, status: "ACTIVE" },
-      design: { active: true },
+      design: activeDesignWhere(new Date()),
     },
     include: { design: true },
   });

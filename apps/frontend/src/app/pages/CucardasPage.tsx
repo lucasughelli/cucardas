@@ -22,6 +22,15 @@ import {
 } from "../../shared/components/icons";
 import { CucardaModal } from "../cucardas/CucardaModal";
 
+/** Estado de una cucarda considerando activación manual + ventana de programación. */
+function scheduleStatus(c: Cucarda): { label: string; cls: string } {
+  if (!c.active) return { label: "Inactiva", cls: "pill--muted" };
+  const now = Date.now();
+  if (c.startsAt && new Date(c.startsAt).getTime() > now) return { label: "Programada", cls: "pill--brand" };
+  if (c.endsAt && new Date(c.endsAt).getTime() < now) return { label: "Finalizada", cls: "pill--muted" };
+  return { label: "Activa", cls: "pill--success" };
+}
+
 export function CucardasPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -204,9 +213,17 @@ export function CucardasPage() {
                     <span className="pill pill--brand">{TYPE_LABELS[c.type]}</span>
                   </td>
                   <td>
-                    <span className={`pill ${c.active ? "pill--success" : "pill--muted"}`}>
-                      {c.active ? "Activa" : "Inactiva"}
-                    </span>
+                    {(() => {
+                      const s = scheduleStatus(c);
+                      return <span className={`pill ${s.cls}`}>{s.label}</span>;
+                    })()}
+                    {(c.startsAt || c.endsAt) && (
+                      <div className="muted" style={{ fontSize: 11, marginTop: 3 }}>
+                        {c.startsAt ? new Date(c.startsAt).toLocaleDateString("es-AR") : "—"}
+                        {" → "}
+                        {c.endsAt ? new Date(c.endsAt).toLocaleDateString("es-AR") : "∞"}
+                      </div>
+                    )}
                   </td>
                   <td>
                     <div className="row" style={{ justifyContent: "flex-end", gap: 6 }}>

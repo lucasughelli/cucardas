@@ -40,6 +40,16 @@ export interface CucardaInput {
   sizePx?: number | null;
   condition?: CucardaCondition;
   hideNativeBadges?: boolean;
+  // programación (ISO strings; null = limpiar, undefined = no cambiar)
+  startsAt?: string | null;
+  endsAt?: string | null;
+}
+
+/** Convierte un valor ISO/null/undefined a Date/null/undefined para Prisma. */
+function toDate(value: string | null | undefined): Date | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  return new Date(value);
 }
 
 export async function listDesigns(storeId: string, params: ListDesignsParams) {
@@ -94,6 +104,8 @@ function displayData(input: Partial<CucardaInput>) {
     sizePx: input.sizePx,
     condition: input.condition,
     hideNativeBadges: input.hideNativeBadges,
+    startsAt: toDate(input.startsAt),
+    endsAt: toDate(input.endsAt),
   };
 }
 
@@ -165,6 +177,8 @@ export async function duplicateDesign(storeId: string, designId: string, newName
       sizePx: o.sizePx,
       condition: o.condition,
       hideNativeBadges: o.hideNativeBadges,
+      startsAt: o.startsAt,
+      endsAt: o.endsAt,
       ...(o.canvasJson != null
         ? { versions: { create: { canvasJson: o.canvasJson as Prisma.InputJsonValue } } }
         : {}),

@@ -41,6 +41,14 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
+/** ISO -> valor para <input type="datetime-local"> (hora local). */
+function isoToLocalInput(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function defaults(cucarda?: Cucarda): CucardaFormValues {
   return {
     name: cucarda?.name ?? "",
@@ -57,6 +65,8 @@ function defaults(cucarda?: Cucarda): CucardaFormValues {
     sizePx: cucarda?.sizePx ?? SIZE_PX[cucarda?.size ?? "SMALL"],
     condition: cucarda?.condition ?? "NONE",
     hideNativeBadges: cucarda?.hideNativeBadges ?? false,
+    startsAt: isoToLocalInput(cucarda?.startsAt),
+    endsAt: isoToLocalInput(cucarda?.endsAt),
   };
 }
 
@@ -87,7 +97,17 @@ export function CucardaModal({ cucarda, onClose }: { cucarda?: Cucarda; onClose:
       if (form.type === "IMAGE" && !form.thumbnailDataUrl && !cucarda?.thumbnailUrl) {
         throw new Error("Subí una imagen para la cucarda");
       }
-      const payload: CucardaFormValues = { ...form, category: form.category?.trim() || undefined };
+      const startsAt = form.startsAt ? new Date(form.startsAt).toISOString() : null;
+      const endsAt = form.endsAt ? new Date(form.endsAt).toISOString() : null;
+      if (startsAt && endsAt && new Date(endsAt) <= new Date(startsAt)) {
+        throw new Error("La fecha de fin debe ser posterior a la de inicio");
+      }
+      const payload: CucardaFormValues = {
+        ...form,
+        category: form.category?.trim() || undefined,
+        startsAt,
+        endsAt,
+      };
       return cucarda ? updateCucarda(cucarda.id, payload) : createCucarda(payload);
     },
     onSuccess: () => {
@@ -360,6 +380,55 @@ export function CucardaModal({ cucarda, onClose }: { cucarda?: Cucarda; onClose:
                 <span className="help">Tapa las cucardas que pone Tiendanube por defecto</span>
               </div>
             </div>
+          </div>
+
+          {/* ---- Programación ---- */}
+          <div
+            style={{
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              padding: 14,
+              background: "var(--surface-2)",
+            }}
+          >
+            <label className="label" style={{ margin: "0 0 4px" }}>🗓️ Programación (opcional)</label>
+            <span className="help" style={{ display: "block", marginBottom: 10 }}>
+              La cucarda solo se muestra en tu tienda dentro de esta ventana. Dejá vacío para que esté
+              siempre (mientras esté activa).
+            </span>
+            <div className="form-grid">
+              <div className="field">
+                <label className="label">Desde</label>
+                <input
+                  className="input"
+                  type="datetime-local"
+                  value={form.startsAt ?? ""}
+                  onChange={(e) => set("startsAt", e.target.value || null)}
+                />
+              </div>
+              <div className="field">
+                <label className="label">Hasta</label>
+                <input
+                  className="input"
+                  type="datetime-local"
+                  value={form.endsAt ?? ""}
+                  onChange={(e) => set("endsAt", e.target.value || null)}
+                />
+              </div>
+            </div>
+            {(form.startsAt || form.endsAt) && (
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                style={{ marginTop: 8 }}
+                onClick={() => {
+                  set("startsAt", null);
+                  set("endsAt", null);
+                }}
+              >
+                Limpiar programación
+              </button>
+            )}
           </div>
 
           {error && <p style={{ color: "var(--danger)", fontSize: 13, margin: 0 }}>{error}</p>}

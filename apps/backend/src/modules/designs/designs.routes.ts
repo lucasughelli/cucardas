@@ -48,6 +48,9 @@ const createSchema = z
     sizePx: z.number().int().min(16).max(400).nullable().optional(),
     condition: z.enum(["NONE", "ON_SALE", "OUT_OF_STOCK", "IN_STOCK", "NEW"]).optional(),
     hideNativeBadges: z.boolean().optional(),
+    // programación (ISO 8601; null limpia)
+    startsAt: z.string().datetime().nullable().optional(),
+    endsAt: z.string().datetime().nullable().optional(),
   })
   .refine((data) => data.type !== "TEXT" || (data.text && data.text.trim().length > 0), {
     message: "Las cucardas de texto requieren un texto",

@@ -25,6 +25,9 @@ export interface Cucarda {
   sizePx?: number | null;
   condition: CucardaCondition;
   hideNativeBadges: boolean;
+  /** Programación: ISO strings. null = sin límite. */
+  startsAt?: string | null;
+  endsAt?: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: { assignments: number };
@@ -46,4 +49,7 @@ export interface CucardaFormValues {
   sizePx?: number | null;
   condition: CucardaCondition;
   hideNativeBadges: boolean;
+  /** Programación. En el form se guardan como strings datetime-local; se convierten a ISO al enviar. */
+  startsAt?: string | null;
+  endsAt?: string | null;
 }

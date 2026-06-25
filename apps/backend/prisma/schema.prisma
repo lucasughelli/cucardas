@@ -186,6 +186,11 @@ model Design {
   condition        CucardaCondition @default(NONE)
   hideNativeBadges Boolean          @default(false) @map("hide_native_badges")
 
+  /// Programación opcional: la cucarda solo se muestra en el storefront dentro de esta ventana.
+  /// startsAt null = desde siempre; endsAt null = sin fin.
+  startsAt DateTime? @map("starts_at")
+  endsAt   DateTime? @map("ends_at")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
