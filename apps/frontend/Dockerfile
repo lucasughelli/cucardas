@@ -4,14 +4,14 @@
 # ---------- build ----------
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json ./
+COPY package.json package-lock.json ./
 # --include=dev fuerza instalar devDependencies (tsc, vite) aunque NODE_ENV=production.
-RUN npm install --include=dev
+RUN npm ci --include=dev
 COPY . .
-# Vite inyecta las VITE_* en build time. Railway pasa las variables del servicio como build args,
-# así que VITE_API_URL tiene que estar definida como variable del servicio en Railway.
-ARG VITE_API_URL
-ARG VITE_TN_APP_ID
+# Vite inyecta las VITE_* en build time. Las variables de entorno se pasan via --build-arg en Railway.
+# Si no están, usa valores por defecto para evitar que el build falle.
+ARG VITE_API_URL=https://api.example.com
+ARG VITE_TN_APP_ID=app-id
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_TN_APP_ID=$VITE_TN_APP_ID
 RUN npm run build
