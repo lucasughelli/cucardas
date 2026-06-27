@@ -1,30 +1,27 @@
-# Frontend (Vite SPA) servido por nginx. Construir con contexto = raíz del repo:
-#   docker build -f apps/frontend/Dockerfile \
-#     --build-arg VITE_API_URL=https://api.tudominio.com \
-#     -t cucardas-frontend .
-#
-# Alternativa más simple: en vez de Docker, deployá la carpeta apps/frontend/dist como sitio
-# estático en Vercel / Netlify / Cloudflare Pages (ver publishing/DEPLOYMENT.md). No necesitás
-# este Dockerfile si usás un host estático.
+# Frontend (Vite SPA) servido por nginx. Autónomo: build context = apps/frontend
+# (Railway Root Directory = apps/frontend). No depende del lockfile de la raíz del monorepo.
 
 # ---------- build ----------
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
-COPY apps/frontend/package.json apps/frontend/package.json
-RUN npm ci
-COPY apps/frontend apps/frontend
-# Vite inyecta las VITE_* en build time
+COPY package.json ./
+# --include=dev fuerza instalar devDependencies (tsc, vite) aunque NODE_ENV=production.
+RUN npm install --include=dev
+COPY . .
+# Vite inyecta las VITE_* en build time. Railway pasa las variables del servicio como build args,
+# así que VITE_API_URL tiene que estar definida como variable del servicio en Railway.
 ARG VITE_API_URL
 ARG VITE_TN_APP_ID
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_TN_APP_ID=$VITE_TN_APP_ID
-WORKDIR /app/apps/frontend
 RUN npm run build
 
 # ---------- runtime ----------
 FROM nginx:alpine AS runtime
-# SPA fallback: cualquier ruta desconocida sirve index.html (para el router del lado cliente)
-RUN printf 'server {\n  listen 80;\n  root /usr/share/nginx/html;\n  location / {\n    try_files $uri $uri/ /index.html;\n  }\n}\n' > /etc/nginx/conf.d/default.conf
-COPY --from=build /app/apps/frontend/dist /usr/share/nginx/html
-EXPOSE 80
+# La imagen oficial de nginx procesa /etc/nginx/templates/*.template con envsubst al iniciar,
+# sustituyendo ${PORT} (env var que inyecta Railway). Las variables de nginx ($uri, $host) NO son
+# variables de entorno, así que envsubst las deja intactas.
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
+ENV PORT=8080
+EXPOSE 8080

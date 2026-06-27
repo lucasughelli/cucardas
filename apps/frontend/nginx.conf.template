@@ -1,0 +1,19 @@
+server {
+    listen       ${PORT};
+    server_name  _;
+    root         /usr/share/nginx/html;
+    index        index.html;
+
+    # Archivos estáticos con cache larga (assets con hash de Vite).
+    location /assets/ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # SPA: cualquier ruta desconocida sirve index.html (router del lado cliente).
+    # Los archivos reales (ej. /privacy.html, /terms.html) se sirven directo porque existen.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
