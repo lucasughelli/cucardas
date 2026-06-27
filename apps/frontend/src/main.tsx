@@ -5,6 +5,8 @@ import App from "./App";
 import { ErrorBoundary } from "./shared/errors/ErrorBoundary";
 import { installGlobalErrorReporting } from "./shared/errors/reportError";
 import "./shared/theme/theme.css";
+// Inicializa el tema (lee localStorage y aplica data-theme) en el arranque, en cualquier página.
+import "./shared/theme/themeStore";
 
 installGlobalErrorReporting();
 
