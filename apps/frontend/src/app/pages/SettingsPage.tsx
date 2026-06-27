@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useThemeStore } from "../../shared/theme/themeStore";
 import {
   changePassword,
   createTeamMember,
@@ -25,6 +26,8 @@ function apiError(e: unknown, fallback: string): string {
 
 export function SettingsPage() {
   const queryClient = useQueryClient();
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
   const teamQuery = useQuery({ queryKey: ["team"], queryFn: listTeam });
 
   // --- Form de nueva cuenta ---
@@ -210,6 +213,31 @@ export function SettingsPage() {
               </button>
             </>
           )}
+        </div>
+
+        {/* ---- Tema ---- */}
+        <div
+          style={{
+            border: "1px solid var(--border)",
+            borderRadius: 12,
+            padding: 14,
+            background: "var(--surface-2)",
+            marginTop: 18,
+          }}
+        >
+          <label className="label" style={{ margin: "0 0 4px" }}>🎨 Tema</label>
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+            {(["light", "dark", "system"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                className={`btn btn--sm ${theme === t ? "btn--primary" : "btn--ghost"}`}
+                onClick={() => setTheme(t)}
+              >
+                {t === "light" ? "☀️ Claro" : t === "dark" ? "🌙 Oscuro" : "⚙️ Sistema"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
