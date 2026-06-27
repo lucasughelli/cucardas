@@ -4,6 +4,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { asyncHandler } from "../../lib/asyncHandler";
+import { logEvent } from "../analytics/analytics.service";
 import { getPublicAssignments, getPublicAssignmentsBatch } from "../assignments/assignments.service";
 
 export const widgetRouter = Router();
@@ -56,5 +57,25 @@ publicApiRouter.get(
     const assignments = await getPublicAssignmentsBatch(store_id, ids);
     res.set("Cache-Control", "public, max-age=60");
     res.json({ assignments });
+  }),
+);
+
+const eventsSchema = z.object({
+  store_id: z.string().min(1),
+  product_id: z.string().min(1),
+  design_id: z.string().min(1),
+  type: z.enum(["impression", "click", "conversion"]),
+});
+
+publicApiRouter.post(
+  "/events",
+  publicRateLimit,
+  asyncHandler(async (req, res) => {
+    const { store_id, product_id, design_id, type } = eventsSchema.parse(req.body);
+    await logEvent(store_id, product_id, design_id, type, {
+      userAgent: req.get("user-agent"),
+      referer: req.get("referer"),
+    });
+    res.json({ ok: true });
   }),
 );

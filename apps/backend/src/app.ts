@@ -1,10 +1,12 @@
 import cors from "cors";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { pinoHttp } from "pino-http";
 import { env } from "./config/env";
 import { logger } from "./lib/logger";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { analyticsRouter } from "./modules/analytics/analytics.routes";
 import { adminRouter } from "./modules/admin/admin.routes";
 import { assignmentsRouter } from "./modules/assignments/assignments.routes";
 import { authRouter } from "./modules/auth/auth.routes";
@@ -33,6 +35,18 @@ export function createApp() {
       contentSecurityPolicy: false, // el panel (SPA) se sirve aparte; no aplicamos CSP acá
     }),
   );
+
+  // Rate limiting: protege contra abuso (100 req/min por IP en producción)
+  if (env.NODE_ENV === "production") {
+    app.use(
+      rateLimit({
+        windowMs: 60_000,
+        limit: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+      }),
+    );
+  }
 
   // CORS restringido al panel propio para las rutas autenticadas. Aceptamos una lista de orígenes:
   // el FRONTEND_URL configurado (producción / túnel) más localhost para desarrollo, así el panel
@@ -82,6 +96,7 @@ export function createApp() {
 
   // Llamado servidor-a-servidor por Tiendanube: no necesita (ni debe depender de) CORS.
   app.use("/webhooks", webhooksRouter);
+  app.use("/api/analytics", appCors, analyticsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

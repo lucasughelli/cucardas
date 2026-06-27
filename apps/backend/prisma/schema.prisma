@@ -125,6 +125,7 @@ model Store {
   errorLogs   ErrorLog[]
   auditLogs   AuditLog[]
   users       StoreUser[]
+  events      CucardaEvent[]
 
   @@map("stores")
 }
@@ -152,6 +153,31 @@ enum StoreUserRole {
   VIEWER
 
   @@map("store_user_role")
+}
+
+enum ABTestVariant {
+  CONTROL
+  VARIANT_A
+  VARIANT_B
+
+  @@map("ab_test_variant")
+}
+
+/// Evento de analytics: impresión (cucarda mostrada), click (usuario hizo clic), conversión (producto comprado).
+/// Anónimo: no identifica usuario, solo producto + cucarda + tipo de evento. Retenido 90 días.
+model CucardaEvent {
+  id        String   @id @default(uuid())
+  storeId   String   @map("store_id")
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId String   @map("product_id")
+  designId  String   @map("design_id")
+  type      String   @map("event_type") /// "impression", "click", "conversion"
+  metadata  Json?    /// user-agent, referer, etc. (anónimo)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([storeId, createdAt])
+  @@index([designId, createdAt])
+  @@map("cucarda_events")
 }
 
 /// Una cucarda. Puede ser de tipo TEXT (texto + colores renderizado por CSS en el storefront)
@@ -221,6 +247,10 @@ model Assignment {
   designId  String   @map("design_id")
   design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
   productId String   @map("product_id")
+  /// Para A/B testing: qué variante (A, B, o control sin test).
+  variant   ABTestVariant @default(CONTROL) @map("variant")
+  /// Peso en A/B test (ej. 50 = 50% de tráfico). Si variant=CONTROL, ignorado.
+  weight    Int?     @map("weight")
   config    Json?
   active    Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at")
