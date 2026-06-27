@@ -4,9 +4,9 @@
 # ---------- build ----------
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json ./
 # --include=dev fuerza instalar devDependencies (tsc, vite) aunque NODE_ENV=production.
-RUN npm ci --include=dev
+RUN npm install --include=dev
 COPY . .
 # Vite inyecta las VITE_* en build time. Las variables de entorno se pasan via --build-arg en Railway.
 # Si no están, usa valores por defecto para evitar que el build falle.
